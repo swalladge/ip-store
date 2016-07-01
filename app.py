@@ -69,7 +69,6 @@ class MainHandler(ApiHandler):
         return self.send_data(None)
 
 
-
 class Database():
     def __init__(self, data_file):
         self.datafile = data_file
@@ -84,6 +83,8 @@ class Database():
             self.save()
 
     def save(self):
+        # dump the dictionary json-encoded to the savefile
+        # not that important, since it's for dynamic ip addresses
         with open(self.datafile, 'w') as f:
             json.dump(self.data, f)
 
@@ -92,12 +93,10 @@ class Database():
 
     def delete(self, host):
         ip = self.data.pop(host, None)
-        self.save()
         return ip
 
     def put(self, host, ip):
         self.data[host] = ip
-        self.save()
         return ip
 
 
@@ -114,6 +113,7 @@ def main():
     )
 
     app.listen(8888)
+    tornado.ioloop.PeriodicCallback(db.save, 1000*cfg.save_interval).start()
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == '__main__':
