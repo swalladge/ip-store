@@ -5,13 +5,11 @@
 
 import tornado.ioloop
 from tornado.web import Application, url
-from tornado.escape import json_decode
 import tornado.httpserver
 import json
 
 import config as cfg
 from basehanders import ApiHandler
-import utils
 
 
 class MainHandler(ApiHandler):
@@ -19,55 +17,58 @@ class MainHandler(ApiHandler):
 
     def get(self, host=None):
         """returns the ip address"""
-        use_json = self.get_query_argument('json', None)
 
         ip = None
+        # returns ip of request if no host specified
         if host is None:
-            ip = self.request.remote_ip
-        else:
-            ip = self.db.get(host)
-
-        if use_json:
-            if ip:
-                self.send_data({'ip': ip})
-            else:
-                self.send_error(404, reason='host not found')
-        else:
-            if ip:
+            if self.current_user in cfg.global_tokens:
+                ip = self.request.remote_ip
                 self.write(ip)
             else:
-                # TODO: non-json error
-                self.send_error(404, reason='host not found')
-
-    def _update_or_add(self, host=None):
-        use_json = self.get_query_argument('json', None)
-        if host is None:
-            return self.send_error(400, reason='no host specified')
+                return self.send_error(401,
+                                       reason='invalid or missing token in params')
         else:
-            # TODO: check if ip address specified in post/put data body
-            ip = self.request.remote_ip
-            self.db.put(host, ip)
-
-            # TODO: use use_json
-            return self.send_data({'ip': ip})
+            if (cfg.tokens.get(host, None) and
+                    self.current_user in cfg.tokens[host]) or \
+                    self.current_user in cfg.global_tokens:
+                ip = self.db.get(host)
+                if ip:
+                    self.write(ip)
+                else:
+                    self.send_error(404, reason='host not found')
+            else:
+                return self.send_error(401,
+                                       reason='invalid or missing token in params')
 
     def post(self, host=None):
         """create data entry with ip address of host"""
-        return self._update_or_add(host)
-
-    def put(self, host=None):
-        """update a data entry"""
-        return self._update_or_add(host)
+        if host is None:
+            return self.send_error(400, reason='no host specified')
+        else:
+            if (cfg.tokens.get(host, None) and
+                    self.current_user in cfg.tokens[host]) or \
+                    self.current_user in cfg.global_tokens:
+                ip = self.request.remote_ip
+                self.db.put(host, ip)
+                return self.write(ip)
+            else:
+                return self.send_error(401,
+                                       reason='invalid or missing token in params')
 
     def delete(self, host=None):
         """delete a data entry"""
-        use_json = self.get_query_argument('json', None)
         if host is not None:
-            res = self.db.delete(host)
-            # if res, return success, else return 404
-        # TODO: use use_json
-        return self.send_data(None)
-
+            if (cfg.tokens.get(host, None) and
+                    self.current_user in cfg.tokens[host]) or \
+                    self.current_user in cfg.global_tokens:
+                res = self.db.delete(host)
+                if not res:
+                    return self.send_error(404, reason='host did not exist')
+            else:
+                return self.send_error(401,
+                                       reason='invalid or missing token in params')
+        else:
+            return self.send_error(400, reason='host must be specified')
 
 class Database():
     def __init__(self, data_file):
@@ -113,7 +114,10 @@ def main():
     )
 
     app.listen(8888)
+
+    # save the db to disk for backup every 'cfg.save_interval' seconds
     tornado.ioloop.PeriodicCallback(db.save, 1000*cfg.save_interval).start()
+
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == '__main__':

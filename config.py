@@ -20,10 +20,11 @@ token = "abc"
 # whether to enforce token auth or not
 needs_auth = True
 
-# TODO: tokens object for finer control
-# eg.
+# tokens that can be used on any hostname request
+global_tokens = ['abc', 'def']
+
+# tokens specific to certain hostname - use for in security if you don't trust
+# something
 tokens = {
-        '*': 'abc',
-        'home_computer': 'blabla',
-        'work': 'longandcomplextoken'
+        'home': ['abcdef']
 }
