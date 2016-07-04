@@ -117,7 +117,7 @@ def main():
         db=db
     )
 
-    app.listen(8888)
+    app.listen(cfg.port)
 
     # save the db to disk for backup every 'cfg.save_interval' seconds
     tornado.ioloop.PeriodicCallback(db.save, 1000*cfg.save_interval).start()

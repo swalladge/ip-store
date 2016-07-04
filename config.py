@@ -3,6 +3,9 @@
 # set which origins are allowed to access with CORS
 cors_origin = "*"
 
+# port to listen on
+port = 8888
+
 # file to store ip address information for persistance
 data_file = 'host_ips.dat'
 
