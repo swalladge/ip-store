@@ -18,6 +18,7 @@ class MainHandler(ApiHandler):
     def get(self, host=None):
         """returns the ip address"""
 
+        # TODO: return json list of hosts/addresses with index?
         ip = None
         # returns ip of request if no host specified
         if host is None:
@@ -52,7 +53,9 @@ class MainHandler(ApiHandler):
             if (cfg.tokens.get(host, None) and
                     self.current_user in cfg.tokens[host]) or \
                     self.current_user in cfg.global_tokens:
-                ip = self.request.remote_ip
+                ip = self.request.headers.get('X-Real-Ip', None)
+                if ip is None:
+                    ip = self.request.remote_ip
                 self.db.put(host, ip)
                 return self.write(ip)
             else:
