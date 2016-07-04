@@ -21,7 +21,9 @@ class MainHandler(ApiHandler):
         ip = None
         # returns ip of request if no host specified
         if host is None:
-            if self.current_user in cfg.global_tokens:
+            if self.current_user in cfg.global_tokens or \
+                    self.current_user in cfg.read_tokens or \
+                    not cfg.read_requires_auth:
                 ip = self.request.remote_ip
                 self.write(ip)
             else:
@@ -30,7 +32,9 @@ class MainHandler(ApiHandler):
         else:
             if (cfg.tokens.get(host, None) and
                     self.current_user in cfg.tokens[host]) or \
-                    self.current_user in cfg.global_tokens:
+                    self.current_user in cfg.global_tokens or \
+                    self.current_user in cfg.read_tokens or \
+                    not cfg.read_requires_auth:
                 ip = self.db.get(host)
                 if ip:
                     self.write(ip)

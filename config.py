@@ -20,11 +20,16 @@ token = "abc"
 # whether to enforce token auth or not
 needs_auth = True
 
-# tokens that can be used on any hostname request
-global_tokens = ['abc', 'def']
+# tokens that can be used on any hostname request (master password)
+global_tokens = ['abcdef']
 
-# tokens specific to certain hostname - use for in security if you don't trust
-# something
+# tokens used for get requests (read)
+read_tokens = global_tokens
+
+# tokens specific to certain hostname - use for security
 tokens = {
         'home': ['abcdef']
 }
+
+# whether reading requires auth token
+read_requires_auth = False
