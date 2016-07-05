@@ -18,15 +18,13 @@ class MainHandler(ApiHandler):
     def get(self, host=None):
         """returns the ip address"""
 
-        # TODO: return json list of hosts/addresses with index?
         ip = None
         # returns ip of request if no host specified
         if host is None:
             if self.current_user in cfg.global_tokens or \
-                    self.current_user in cfg.read_tokens or \
-                    not cfg.read_requires_auth:
-                ip = self.request.remote_ip
-                self.write(ip)
+                    self.current_user in cfg.read_index_tokens or \
+                    not cfg.read_index_requires_auth:
+                self.write(json.dumps(self.db.dump(), indent=2))
             else:
                 return self.send_error(401,
                                        reason='invalid or missing token in params')
@@ -106,6 +104,9 @@ class Database():
     def put(self, host, ip):
         self.data[host] = ip
         return ip
+
+    def dump(self):
+        return self.data
 
 
 def main():

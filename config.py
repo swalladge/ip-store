@@ -21,6 +21,9 @@ global_tokens = ['abcdef']
 # tokens used for get requests (read)
 read_tokens = global_tokens
 
+# tokens used to access the index
+read_index_tokens = global_tokens
+
 # tokens specific to certain hostname - use for security
 tokens = {
         'home': ['abcdef']
@@ -28,3 +31,6 @@ tokens = {
 
 # whether reading requires auth token
 read_requires_auth = False
+
+# whether you need auth for accessing the index
+read_index_requires_auth = True
