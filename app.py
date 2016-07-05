@@ -99,10 +99,14 @@ class Database():
 
     def delete(self, host):
         ip = self.data.pop(host, None)
+        self.save()
         return ip
 
     def put(self, host, ip):
+        old = self.data.get(host, None)
         self.data[host] = ip
+        if old != ip:
+            self.save()
         return ip
 
     def dump(self):
@@ -122,10 +126,6 @@ def main():
     )
 
     app.listen(cfg.port)
-
-    # save the db to disk for backup every 'cfg.save_interval' seconds
-    tornado.ioloop.PeriodicCallback(db.save, 1000*cfg.save_interval).start()
-
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == '__main__':
