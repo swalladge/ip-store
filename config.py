@@ -1,4 +1,4 @@
-
+import os
 
 # set which origins are allowed to access with CORS
 cors_origin = "*"
@@ -34,3 +34,14 @@ read_requires_auth = False
 
 # whether you need auth for accessing the index
 read_index_requires_auth = True
+
+# which dns backend to use (if you want dynamic dns)
+dns_backend = 'digitalocean'
+
+# options for the dns backend
+# - example for the digitalocean backend
+dns_options = {
+        'token': os.environ['DO_TOKEN'],
+        'hosts': ['home', 'work'],  # allowed hosts (A records) to access
+        'domain': 'example.com'
+}

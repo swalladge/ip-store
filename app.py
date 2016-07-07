@@ -7,6 +7,7 @@ import tornado.ioloop
 from tornado.web import Application, url
 import tornado.httpserver
 import json
+import importlib
 
 import config as cfg
 from basehanders import ApiHandler
@@ -54,8 +55,15 @@ class MainHandler(ApiHandler):
                 ip = self.request.headers.get('X-Real-Ip', None)
                 if ip is None:
                     ip = self.request.remote_ip
-                self.db.put(host, ip)
-                return self.write(ip)
+                res = self.db.put(host, ip)
+
+                # all good
+                if res >= 200 and res < 300:
+                    return self.write(ip)
+                # uh oh
+                else:
+                    # TODO: logging
+                    return self.send_error(res, reason='failed to update the dns')
             else:
                 return self.send_error(401,
                                        reason='invalid or missing token in params')
@@ -76,8 +84,9 @@ class MainHandler(ApiHandler):
             return self.send_error(400, reason='host must be specified')
 
 class Database():
-    def __init__(self, data_file):
+    def __init__(self, data_file, backend=None):
         self.datafile = data_file
+        self.backend = backend
         self.data = {}
 
     def init(self):
@@ -105,16 +114,27 @@ class Database():
     def put(self, host, ip):
         old = self.data.get(host, None)
         self.data[host] = ip
+        status = 200
         if old != ip:
-            self.save()
-        return ip
+            if self.backend:
+                status = self.backend.update(host, ip)
+                if status >= 200 and status < 300:
+                    self.save()
+            else:
+                self.save()
+        return status
 
     def dump(self):
         return self.data
 
 
 def main():
-    db = Database(cfg.data_file)
+    backend = None
+    if cfg.dns_backend:
+        backend_module = importlib.import_module('dns_backends.{}'.format(cfg.dns_backend))
+        backend = backend_module.DynDNS()
+
+    db = Database(cfg.data_file, backend)
     db.init()
 
     app = Application([
