@@ -8,9 +8,13 @@ from tornado.web import Application, url
 import tornado.httpserver
 import json
 import importlib
+import tornado.options
+import logging
 
 import config as cfg
 from basehanders import ApiHandler
+
+log = logging.getLogger("tornado.general")
 
 
 class MainHandler(ApiHandler):
@@ -62,7 +66,6 @@ class MainHandler(ApiHandler):
                     return self.write(ip)
                 # uh oh
                 else:
-                    # TODO: logging
                     return self.send_error(res, reason='failed to update the dns')
             else:
                 return self.send_error(401,
@@ -83,6 +86,7 @@ class MainHandler(ApiHandler):
         else:
             return self.send_error(400, reason='host must be specified')
 
+
 class Database():
     def __init__(self, data_file, backend=None):
         self.datafile = data_file
@@ -94,7 +98,7 @@ class Database():
             with open(self.datafile) as f:
                 self.data = json.load(f)
         except:
-            print('error reading file - attempting to create first')
+            log.info('error reading file - attempting to create first')
             self.save()
 
     def save(self):
@@ -136,6 +140,8 @@ def main():
 
     db = Database(cfg.data_file, backend)
     db.init()
+
+    tornado.options.parse_command_line()
 
     app = Application([
         url(r'^//?$', MainHandler),

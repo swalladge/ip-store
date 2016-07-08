@@ -3,6 +3,9 @@ import requests
 
 import config as cfg
 
+import logging
+
+log = logging.getLogger("tornado.general")
 
 class DynDNS():
     # init is used for everything it needs to setup to be 100% ready
@@ -35,15 +38,16 @@ class DynDNS():
             if not url:
                 break
 
-        print(self.hosts)
+        log.info('Digitalocean discovered hosts: {}'.format(self.hosts))
 
     # called when a host's ip changes
     # - return a http status code
     # - if host not found/allowed, just return 200 and log it
     def update(self, host, ip):
         if host not in self.hosts:
-            print('{} not in DNS hosts'.format(host))
-            return 200 # unable to update, but don't throw errors (we still use the ip store)
+            # unable to update, log, but we still use the ip store
+            log.info('{} not in DNS hosts, skipping'.format(host))
+            return 200
 
         id = self.hosts[host]
         data = {

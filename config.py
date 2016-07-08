@@ -37,6 +37,7 @@ read_index_requires_auth = True
 
 # which dns backend to use (if you want dynamic dns)
 dns_backend = 'digitalocean'
+dns_backend = None
 
 # options for the dns backend
 # - example for the digitalocean backend
