@@ -133,6 +133,8 @@ class Database():
 
 
 def main():
+    tornado.options.parse_command_line()
+
     backend = None
     if cfg.dns_backend:
         backend_module = importlib.import_module('dns_backends.{}'.format(cfg.dns_backend))
@@ -140,8 +142,6 @@ def main():
 
     db = Database(cfg.data_file, backend)
     db.init()
-
-    tornado.options.parse_command_line()
 
     app = Application([
         url(r'^//?$', MainHandler),
